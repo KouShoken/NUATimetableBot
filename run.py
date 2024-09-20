@@ -15,7 +15,9 @@ load_dotenv()
 
 def send():
     # 获取当前时间戳
-    current_timestamp = time.time()
+    current_timestamp = tokyo_timestamp()
+    print(tokyo_timestamp())
+    print(time.time())
 
     # 获取实时课程表数据
     timetable_data = TimeList().get_realtime_class(timestamp=current_timestamp)

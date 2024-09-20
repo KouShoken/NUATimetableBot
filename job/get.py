@@ -15,7 +15,7 @@ def tokyo_timestamp():
     tokyo_time = datetime.now(tokyo_tz)
 
     # 返回时间戳
-    return int(tokyo_time.timestamp())
+    return tokyo_time.timestamp()
 
 
 class TimeList:
@@ -54,7 +54,7 @@ class TimeList:
 
         return self.__get(url, data).json()
 
-    def get_realtime_class(self, timestamp=t.time(), subjectAffiliation=0):
+    def get_realtime_class(self, timestamp=tokyo_timestamp(), subjectAffiliation=0):
         """Get the class on teaching"""
         now_period = NUA().get_period(timestamp)
 
@@ -89,13 +89,19 @@ class NUA:
         self.sta_semester2 = datetime(this.year, 9, 1)
         self.end_semester2 = datetime(this.year + 1, 2, 1)
 
-    def get_period(self, timestamp):
-        t = datetime.fromtimestamp(timestamp)
+    def get_period(self, timestamp=tokyo_timestamp()):
+        # 获取东京时区
+        tokyo_tz = pytz.timezone('Asia/Tokyo')
+
+        # 将时间戳转换为东京时间
+        t = datetime.fromtimestamp(timestamp, tokyo_tz)
+
         hour, minute = t.hour, t.minute
 
         for i, (start_h, start_m, end_h, end_m) in enumerate(self.class_schedule):
             if (start_h, start_m) <= (hour, minute) <= (end_h, end_m):
                 return i + 1
+
         return 0
 
     def check_semester(self, timestamp):
