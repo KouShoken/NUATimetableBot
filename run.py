@@ -16,17 +16,22 @@ load_dotenv()
 def send():
     # 获取当前时间戳
     current_timestamp = tokyo_timestamp()
-    print(tokyo_timestamp())
-    print(time.time())
+
+    # 获取当前的限数
+    current_period = NUA().get_period(current_timestamp)
+
+    # ! 0限不運行
+    if current_period == 0:
+        exit()
+
+    # 格式化当前限数
+    formatted_period = Story().now_format_period(current_period)
 
     # 获取实时课程表数据
     timetable_data = TimeList().get_realtime_class(timestamp=current_timestamp)
 
     # 格式化课程表
     formatted_timetable = Story().now_format_timetable(timetable_data)
-
-    # 格式化当前限数
-    formatted_period = Story().now_format_period(current_timestamp)
 
     tweet = f"{formatted_period} #日芸はこんな授業してる\n\n{formatted_timetable}"
 
@@ -66,4 +71,6 @@ def run():
 
 
 if __name__ == '__main__':
+    str_time = time.time()
     run()
+    print(f"Usage time: {time.time() - str_time}")

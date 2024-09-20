@@ -39,15 +39,13 @@ class Story:
         return text.strip()
 
     @staticmethod
-    def now_format_period(timestamp):
+    def now_format_period(current_period):
         """
         根据时间戳生成当前的限数和时段 (午前 or 午後)
         """
-        # 获取当前的限数
-        current_period = NUA().get_period(tokyo_timestamp())
 
         # 根据时间判断是午前还是午後
-        parts_of_day = "午前" if datetime.fromtimestamp(timestamp).hour < 12 else "午後"
+        parts_of_day = "午前" if current_period < 2 else "午後"
 
         # 返回格式化后的时段信息
         return f"{parts_of_day}{current_period}限"
@@ -85,17 +83,3 @@ class Story:
             result += "\n"
 
         return result.strip()
-
-
-if __name__ == '__main__':
-    # 获取实时课程表数据
-    timetable_data = TimeList().get_realtime_class(timestamp=tokyo_timestamp())
-
-    # 格式化课程表
-    formatted_timetable = Story().now_format_timetable(timetable_data)
-
-    # 格式化当前限数
-    formatted_period = Story().now_format_period(tokyo_timestamp())
-
-    # 打印结果
-    print(f"{formatted_period} #日芸はこんな授業してる\n\n{formatted_timetable}")
