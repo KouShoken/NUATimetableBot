@@ -5,16 +5,14 @@ from datetime import datetime
 from pathlib import Path
 from string import Template
 
-from bot import x
 from job import get
 from job.get import NUA, TimeList
 
 
 class Story:
-    MAX_TWEET_LENGTH = 280  # 假设每条推文的最大字数限制为140
 
     @staticmethod
-    def __get_patten(values):
+    def get_patten(values):
         stack = inspect.stack()
         caller_function_name = stack[1].function
 
@@ -40,119 +38,67 @@ class Story:
         # 去掉多余的前后空格
         return text.strip()
 
-    def split_into_tweets(self, content):
-        """根据最大推文长度将内容分割为多个推文"""
-        tweets = []
-        current_tweet = ""
+    @staticmethod
+    def now_format_period(timestamp):
+        """
+        根据时间戳生成当前的限数和时段 (午前 or 午後)
+        """
+        # 获取当前的限数
+        current_period = NUA().get_period(timestamp)
 
-        for line in content.split("\n"):
-            if len(current_tweet) + len(line) + 1 > self.MAX_TWEET_LENGTH:
-                tweets.append(current_tweet + "（続）")
-                current_tweet = line + "\n"
-            else:
-                current_tweet += line + "\n"
+        # 根据时间判断是午前还是午後
+        parts_of_day = "午前" if datetime.fromtimestamp(timestamp).hour < 12 else "午後"
 
-        if current_tweet:  # 添加最后一条推文
-            tweets.append(current_tweet.strip())
+        # 返回格式化后的时段信息
+        return f"{parts_of_day}{current_period}限"
 
-        return tweets
-
-    def now_class(self, timestamp=get.tokyo_timestamp() + 600):
-        """　午前2限 #日芸はどんな授業してる？ """
-
-        time_table = TimeList().get_realtime_class(timestamp=timestamp)
-
-        # 整理
+    @staticmethod
+    def now_format_timetable(data):
+        """
+        格式化课程表信息为以下格式:
+        [文芸]
+        思想の歴史 ー 山下 洪文
+        マンガ演習Ⅱ ー あおき てつお
+        マンガ演習Ⅱ ー こにし 真樹子
+        """
+        # 创建字典用于按科目分类课程
         class_table = {}
-        for c in time_table:
-            if c['subjectAffiliation'] not in class_table:
-                class_table[c['subjectAffiliation']] = [(c['subjectName'], c['teacherCharge'])]
-            else:
-                class_table[c['subjectAffiliation']] += [(c['subjectName'], c['teacherCharge'])]
 
-        # 外国語/体育/芸教の適正処理
-        foreign_language, pe, ae, te, gg = [], [], [], [], []
+        # 遍历数据
+        for entry in data:
+            subject = entry['subjectAffiliation']
+            course = Story.clean_subject_title(entry['subjectName'])  # 清理课程标题
+            teacher = Story.clean_subject_title(entry['teacherCharge'])  # 清理教师名称
 
-        if "外国" in class_table:
-            foreign_language = class_table["外国"]
-            del class_table["外国"]
-        if "体育" in class_table:
-            pe = class_table["体育"]
-            del class_table["体育"]
-        if "芸教" in class_table:
-            ae = class_table["芸教"]
-            del class_table["芸教"]
-        if "教職" in class_table:
-            te = class_table["教職"]
-            del class_table["教職"]
-        if "学芸" in class_table:
-            gg = class_table["学芸"]
-            del class_table["学芸"]
+            # 如果科目还未添加到表中，初始化它
+            if subject not in class_table:
+                class_table[subject] = []
+            # 添加课程和教师信息
+            class_table[subject].append((course, teacher))
 
-        # 格式化输出并存储到 result_str 中
-        context = ""
+        # 格式化输出
+        result = ""
         for subject, courses in class_table.items():
-            context += f"[{subject}]\n"
+            result += f"[{subject}]\n"
             for course, teacher in courses:
-                # 使用 clean_text 函数处理课程名和老师名
-                clean_course = self.clean_subject_title(course)
-                clean_teacher = self.clean_subject_title(teacher)
-                context += f"{clean_course} ー {clean_teacher}\n"
+                result += f"{course} ー {teacher}\n"
+            result += "\n"
 
-        subjects = self.__get_patten({
-            "parts_of_day": "午前" if datetime.fromtimestamp(timestamp).hour < 12 else "午後",
-            "period": NUA().get_period(timestamp),
-            "context": context
-        })
-
-        # 使用字典合并相同的课程
-        course_dict = {}
-
-        # 遍历所有的课程数据
-        for subject_courses in (foreign_language, pe, ae, te, gg):
-            for course, teacher in subject_courses:
-                # 使用 self.clean_subject_title 清理课程名和教师名
-                clean_course = self.clean_subject_title(course)
-                clean_teacher = self.clean_subject_title(teacher)
-
-                # 合并相同的课程
-                if clean_course in course_dict:
-                    course_dict[clean_course].append(clean_teacher)
-                else:
-                    course_dict[clean_course] = [clean_teacher]
-
-        # 拼接结果
-        others = ""
-        for course, teachers in course_dict.items():
-            # 将教师名用逗号分隔，拼接到最终字符串
-            others += f"{course} ー {', '.join(teachers)}\n"
-
-        # 拆分subjects和others为多个推文
-        tweets_subjects = self.split_into_tweets(subjects)
-        tweets_others = self.split_into_tweets(others)
-
-        return tweets_subjects, tweets_others
+        return result.strip()
 
 
 if __name__ == '__main__':
-    story = Story()
-    tweets_subjects, tweets_others = story.now_class()
+    # 获取当前时间戳
+    current_timestamp = time.time()
 
-    # 输出拆分后的推文
-    for tweet in tweets_subjects:
-        print(tweet)
-        print("------------")
-    for tweet in tweets_others:
-        print(tweet)
-        print("------------")
+    # 获取实时课程表数据
+    timetable_data = TimeList().get_realtime_class(timestamp=current_timestamp)
 
-    # 测试推送
-    bot = x.Bot()
+    # 格式化课程表
+    formatted_timetable = Story().now_format_timetable(timetable_data)
 
-    # 示例推文内容
+    # 格式化当前限数
+    formatted_period = Story().now_format_period(current_timestamp)
 
-    # 认证 Twitter API
-    api = bot.authenticate_twitter()
-
-    # 发送连发推文
-    bot.send_tweets(api, tweets_subjects + tweets_others)
+    # 打印结果
+    print(f"{formatted_period} #日芸はこんな授業してる\n\n{formatted_timetable}")

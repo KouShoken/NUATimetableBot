@@ -14,10 +14,8 @@ def tokyo_timestamp():
     # 获取当前东京时间
     tokyo_time = datetime.now(tokyo_tz)
 
-    print(int(tokyo_time.timestamp()))
-
     # 返回时间戳
-    return 1726791671
+    return int(tokyo_time.timestamp())
 
 
 class TimeList:
@@ -78,26 +76,22 @@ class NUA:
     def __init__(self):
         self.class_schedule = [
             (9, 0, 10, 30),
-            (10, 40, 12, 10),
+            (10, 30, 13, 0),
             (13, 0, 14, 30),
-            (14, 40, 16, 10),
-            (16, 20, 17, 50),
+            (14, 30, 16, 10),
+            (16, 10, 18, 0),
             (18, 0, 19, 30)
         ]
 
         this = datetime.fromtimestamp(tokyo_timestamp())
-        self.sta_semester1 = datetime(this.year, int(os.getenv("SEMESTER1_START_MONTH")),
-                                      int(os.getenv("SEMESTER1_START_DAY")))
-        self.end_semester1 = datetime(this.year, int(os.getenv("SEMESTER1_END_MONTH")),
-                                      int(os.getenv("SEMESTER1_END_DAY")))
-        self.sta_semester2 = datetime(this.year, int(os.getenv("SEMESTER2_START_MONTH")),
-                                      int(os.getenv("SEMESTER2_START_DAY")))
-        self.end_semester2 = datetime(this.year + 1, int(os.getenv("SEMESTER2_END_MONTH")),
-                                      int(os.getenv("SEMESTER2_END_DAY")))
+        self.sta_semester1 = datetime(this.year, 4, 1)
+        self.end_semester1 = datetime(this.year, 8, 30)
+        self.sta_semester2 = datetime(this.year, 9, 1)
+        self.end_semester2 = datetime(this.year + 1, 2, 1)
 
     def get_period(self, timestamp):
-        time = datetime.fromtimestamp(timestamp)
-        hour, minute = time.hour, time.minute
+        t = datetime.fromtimestamp(timestamp)
+        hour, minute = t.hour, t.minute
 
         for i, (start_h, start_m, end_h, end_m) in enumerate(self.class_schedule):
             if (start_h, start_m) <= (hour, minute) <= (end_h, end_m):

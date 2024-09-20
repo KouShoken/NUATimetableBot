@@ -4,9 +4,9 @@ import schedule
 import time
 from datetime import datetime, timedelta
 
-from bot import x
 from bot.story import Story
-from job.get import NUA, tokyo_timestamp
+from bot.x_apiv2 import Tweets
+from job.get import NUA, tokyo_timestamp, TimeList
 
 from dotenv import load_dotenv
 
@@ -14,17 +14,23 @@ load_dotenv()
 
 
 def send():
-    story = Story()
-    tweets_subjects, tweets_others = story.now_class()
+    # 获取当前时间戳
+    current_timestamp = time.time()
 
-    # 测试推送
-    bot = x.Bot()
+    # 获取实时课程表数据
+    timetable_data = TimeList().get_realtime_class(timestamp=current_timestamp)
 
-    # 认证 Twitter API
-    api = bot.authenticate_twitter()
+    # 格式化课程表
+    formatted_timetable = Story().now_format_timetable(timetable_data)
 
-    # 发送连发推文
-    bot.send_tweets(api, tweets_subjects + tweets_others)
+    # 格式化当前限数
+    formatted_period = Story().now_format_period(current_timestamp)
+
+    tweet = f"{formatted_period} #日芸はこんな授業してる\n\n{formatted_timetable}"
+
+    # SEND
+    tweets = Tweets()
+    tweets.auto_post(tweet)
 
 
 def check_today_in_dates(filepath):
@@ -53,7 +59,7 @@ def run():
         send()
         return True
     else:
-        print("Today is not a teaching day, sleeping for 24 hours.")
+        print("Today is not a teaching day")
         return False
 
 
