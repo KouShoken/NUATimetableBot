@@ -2,7 +2,7 @@ import os
 
 import schedule
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from bot.story import Story
 from bot.x_apiv2 import Tweets
@@ -16,16 +16,22 @@ load_dotenv()
 def send():
     # 获取当前时间戳
     current_timestamp = tokyo_timestamp()
+    current_date = datetime.fromtimestamp(current_timestamp, timezone(timedelta(hours=9)))
 
     # 获取当前的限数
     current_period = NUA().get_period(current_timestamp)
 
     # ! 0限不運行
-    if current_period == 0:
-        exit()
+    # if current_period == 0:
+    #     print("Not in a Period Time.")
+    #     exit()
 
     # 格式化当前限数
     formatted_period = Story().now_format_period(current_period)
+
+    # 从时间戳获取当前的星期几
+    weekday_kanji = ['月', '火', '水', '木', '金', '土', '日']
+    current_weekday = datetime.fromtimestamp(current_timestamp, timezone(timedelta(hours=9))).weekday()
 
     # 获取实时课程表数据
     timetable_data = TimeList().get_realtime_class(timestamp=current_timestamp)
@@ -33,11 +39,15 @@ def send():
     # 格式化课程表
     formatted_timetable = Story().now_format_timetable(timetable_data)
 
-    tweet = f"{formatted_period} #日芸はこんな授業してる\n\n{formatted_timetable}"
+    tweet = (f"{current_date.strftime('%m/%d')}({weekday_kanji[current_weekday]}) "
+             f"{formatted_period} "
+             f"#日芸はこんな授業してる #春から日芸\n\n{formatted_timetable}")
+
+    print(tweet)
 
     # SEND
-    tweets = Tweets()
-    tweets.auto_post(tweet)
+    # tweets = Tweets()
+    # tweets.auto_post(tweet)
 
 
 def check_today_in_dates(filepath):
