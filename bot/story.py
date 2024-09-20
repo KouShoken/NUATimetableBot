@@ -6,6 +6,7 @@ from pathlib import Path
 from string import Template
 
 from bot import x
+from job import get
 from job.get import NUA, TimeList
 
 
@@ -17,7 +18,7 @@ class Story:
         stack = inspect.stack()
         caller_function_name = stack[1].function
 
-        file_path = Path(f"./stories/{caller_function_name}.txt").resolve()
+        file_path = Path(f"bot/stories/{caller_function_name}.txt").resolve()
 
         # open template file
         with open(file_path, encoding='utf-8') as file:
@@ -56,7 +57,7 @@ class Story:
 
         return tweets
 
-    def now_class(self, timestamp=time.time()):
+    def now_class(self, timestamp=get.tokyo_timestamp() + 600):
         """　午前2限 #日芸はどんな授業してる？ """
 
         time_table = TimeList().get_realtime_class(timestamp=timestamp)

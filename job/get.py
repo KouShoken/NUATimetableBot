@@ -3,7 +3,21 @@ import time
 import time as t
 from datetime import datetime
 
+import pytz
 import requests
+
+
+def tokyo_timestamp():
+    # 获取东京时区
+    tokyo_tz = pytz.timezone('Asia/Tokyo')
+
+    # 获取当前东京时间
+    tokyo_time = datetime.now(tokyo_tz)
+
+    print(int(tokyo_time.timestamp()))
+
+    # 返回时间戳
+    return 1726791671
 
 
 class TimeList:
@@ -71,7 +85,7 @@ class NUA:
             (18, 0, 19, 30)
         ]
 
-        this = datetime.fromtimestamp(time.time())
+        this = datetime.fromtimestamp(tokyo_timestamp())
         self.sta_semester1 = datetime(this.year, int(os.getenv("SEMESTER1_START_MONTH")),
                                       int(os.getenv("SEMESTER1_START_DAY")))
         self.end_semester1 = datetime(this.year, int(os.getenv("SEMESTER1_END_MONTH")),
