@@ -61,6 +61,10 @@ class Tweets:
             json=payload,
         )
 
+        print(response)
+        print(response.content)
+        print(response.text)
+
         return response
 
     @staticmethod
@@ -69,8 +73,8 @@ class Tweets:
         自動ポスト組み立て
         :return:
         """
-        tweets = Tweets()
-        for_send = tweets.split_tweets(text)
+        t = Tweets()
+        for_send = t.split_tweets(text)
 
         sent_posts_data = []
         last_round = None
@@ -84,10 +88,12 @@ class Tweets:
                 response = last_round.json()
                 content["reply"] = {"in_reply_to_tweet_id": response["data"]["id"]}
 
-            last_round = tweets.post(
+            last_round = t.post(
                 content
             )
             sent_posts_data.append(last_round)
+
+            print(sent_posts_data)
 
         return sent_posts_data
 
